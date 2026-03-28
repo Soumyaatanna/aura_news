@@ -1,0 +1,71 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user preferences and persona (Investor, Founder, Student).",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "persona": { "type": "string", "enum": ["investor", "founder", "student"] },
+        "interests": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "persona"]
+    },
+    "NewsStory": {
+      "title": "News Story",
+      "description": "A synthesized news story or briefing.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "publishedAt": { "type": "string", "format": "date-time" },
+        "sourceUrls": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["title", "summary", "content"]
+    },
+    "StoryArc": {
+      "title": "Story Arc",
+      "description": "Visual narrative of an ongoing business story.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "timeline": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": { "type": "string" },
+              "event": { "type": "string" },
+              "sentiment": { "type": "number" }
+            }
+          }
+        },
+        "keyPlayers": { "type": "array", "items": { "type": "string" } },
+        "predictions": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["title", "timeline"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "UserProfile",
+      "description": "User profiles and settings."
+    },
+    "/stories": {
+      "schema": "NewsStory",
+      "description": "Global synthesized news stories."
+    },
+    "/storyArcs": {
+      "schema": "StoryArc",
+      "description": "Visual narratives for major business events."
+    }
+  }
+}

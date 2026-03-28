@@ -1,0 +1,125 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: uid
+    // Fields:
+    //   - uid: string (required) - User's unique ID
+    //   - displayName: string (optional) - User's display name
+    //   - email: string (optional) - User's email address
+    //   - persona: string (required) - One of: investor, founder, student
+    //   - interests: list (optional) - List of interest strings
+    //   - createdAt: timestamp (optional) - Creation time
+    //
+    // Collection: stories
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (required) - Story title
+    //   - summary: string (required) - Story summary
+    //   - content: string (required) - Full story content
+    //   - category: string (optional) - Story category
+    //   - tags: list (optional) - List of tag strings
+    //   - publishedAt: timestamp (optional) - Publication time
+    //   - sourceUrls: list (optional) - List of source URL strings
+    //
+    // Collection: storyArcs
+    // Document ID: auto-generated
+    // Fields:
+    //   - title: string (required) - Story arc title
+    //   - timeline: list (required) - List of timeline objects
+    //   - keyPlayers: list (optional) - List of key player strings
+    //   - predictions: list (optional) - List of prediction strings
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || 
+         (request.auth.token.email == "soumyatanna103@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidUser(data) {
+      return hasRequiredFields(['uid', 'persona']) &&
+             data.uid == request.auth.uid &&
+             data.persona in ['investor', 'founder', 'student'] &&
+             (!('email' in data) || isValidEmail(data.email)) &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100)) &&
+             (!('interests' in data) || (data.interests is list && data.interests.size() <= 20)) &&
+             (!('role' in data) || (data.role is string && data.role in ['admin', 'user']));
+    }
+
+    function isValidStory(data) {
+      return hasRequiredFields(['title', 'summary', 'content']) &&
+             data.title is string && data.title.size() < 200 &&
+             data.summary is string && data.summary.size() < 1000 &&
+             data.content is string && data.content.size() < 10000;
+    }
+
+    function isValidStoryArc(data) {
+      return hasRequiredFields(['title', 'timeline']) &&
+             data.title is string && data.title.size() < 200 &&
+             data.timeline is list && data.timeline.size() <= 50;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && (!('role' in request.resource.data) || request.resource.data.role == 'user');
+      allow update: if (isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == resource.data.role)) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /stories/{storyId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin() && isValidStory(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /storyArcs/{arcId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin() && isValidStoryArc(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

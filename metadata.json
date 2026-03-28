@@ -1,0 +1,7 @@
+{
+  "name": "Remix: Aura News: AI-Native Business Intelligence",
+  "description": "A next-generation business news platform featuring personalized newsrooms, interactive briefings, AI video generation, story arc tracking, and vernacular support.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
