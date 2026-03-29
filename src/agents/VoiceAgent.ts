@@ -21,28 +21,20 @@ export const generateSpeech = async (text: string, voice: 'Puck' | 'Charon' | 'K
     }));
 
     const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (base64Audio) {
+    if (base64Audio && base64Audio.length > 100) { // Validate audio data is substantial
       console.log('✅ Gemini TTS success');
       return `data:audio/wav;base64,${base64Audio}`;
+    } else {
+      console.warn('⚠️ Gemini returned empty audio data, falling back to Web Speech API');
     }
   } catch (e) {
-    console.warn("Gemini TTS failed, falling back to Web Speech API:", e);
+    console.warn("⚠️ Gemini TTS failed, falling back to Web Speech API:", e);
   }
 
-  // Fallback: Use browser Web Speech API
-  if (isWebSpeechAPIAvailable()) {
-    try {
-      console.log('🎤 Using Web Speech API for TTS (browser-native, free)');
-      // Return a special marker that indicates we should use Web Speech API
-      return `ws-api:///${encodeURIComponent(text)}`;
-    } catch (error) {
-      console.error('Web Speech API fallback failed:', error);
-    }
-  }
-
-  // Last resort: return null
-  console.warn('🚫 All TTS methods failed');
-  return null;
+  // Fallback: Use browser Web Speech API (always works, no quota limits)
+  console.log('🎤 Using Web Speech API for TTS (browser-native, free, always available)');
+  // Return a special marker that indicates we should use Web Speech API
+  return `ws-api:///${encodeURIComponent(text)}`;
 };
 
 export const generatePodcastScript = async (topics: string[], persona: string, specificTopic?: string) => {

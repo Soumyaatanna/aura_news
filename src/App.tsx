@@ -121,11 +121,11 @@ const ErrorBoundary = ({ children }: { children: React.ReactNode }) => {
     }
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-red-50 dark:bg-red-950/20 p-4 transition-colors duration-300">
-        <div className="bg-white dark:bg-[#141414] p-8 rounded-2xl shadow-xl max-w-md w-full border border-red-100 dark:border-red-900/30">
+      <div className="min-h-screen flex items-center justify-center bg-red-50 p-4 transition-colors duration-300">
+        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border border-red-100">
           <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Something went wrong</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">{displayMsg}</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Something went wrong</h2>
+          <p className="text-gray-600 mb-6">{displayMsg}</p>
           <button 
             onClick={() => window.location.reload()}
             className="w-full py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition-colors"
@@ -155,8 +155,8 @@ const Onboarding = ({ onComplete }: { onComplete: (persona: Persona, interests: 
     return (
       <div className="max-w-5xl mx-auto">
         <div className="mb-12">
-          <h2 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight mb-4">Choose your persona.</h2>
-          <p className="text-gray-500 dark:text-gray-400 text-lg">We'll tailor your newsroom to your specific professional needs.</p>
+          <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-4">Choose your persona.</h2>
+          <p className="text-gray-500 text-lg">We'll tailor your newsroom to your specific professional needs.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {personas.map((p) => (
@@ -165,14 +165,14 @@ const Onboarding = ({ onComplete }: { onComplete: (persona: Persona, interests: 
               whileHover={{ scale: 1.02, y: -5 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => { setPersona(p.id); setStep(2); }}
-              className="bg-white dark:bg-[#141414] p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 text-left flex flex-col items-start group hover:border-orange-200 dark:hover:border-orange-500/50 transition-all"
+              className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 text-left flex flex-col items-start group hover:border-orange-200 transition-all"
             >
-              <div className="w-12 h-12 bg-orange-50 dark:bg-orange-500/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-100 dark:group-hover:bg-orange-500/20 transition-colors">
-                <p.icon className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+              <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-orange-100 transition-colors">
+                <p.icon className="w-6 h-6 text-orange-600" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{p.title}</h3>
-              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{p.desc}</p>
-              <div className="mt-8 flex items-center text-orange-600 dark:text-orange-400 font-semibold text-sm">
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{p.title}</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">{p.desc}</p>
+              <div className="mt-8 flex items-center text-orange-600 font-semibold text-sm">
                 Select Persona <ChevronRight className="w-4 h-4 ml-1" />
               </div>
             </motion.button>
@@ -185,16 +185,16 @@ const Onboarding = ({ onComplete }: { onComplete: (persona: Persona, interests: 
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-12">
-        <h2 className="text-4xl font-black text-gray-900 dark:text-white tracking-tight mb-4">What are your interests?</h2>
-        <p className="text-gray-500 dark:text-gray-400 text-lg">Enter topics you care about (e.g., AI, Fintech, Semiconductors).</p>
+        <h2 className="text-4xl font-black text-gray-900 tracking-tight mb-4">What are your interests?</h2>
+        <p className="text-gray-500 text-lg">Enter topics you care about (e.g., AI, Fintech, Semiconductors).</p>
       </div>
-      <div className="bg-white dark:bg-[#141414] p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800">
+      <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
         <input
           type="text"
           value={interestsInput}
           onChange={(e) => setInterestsInput(e.target.value)}
           placeholder="e.g. AI, Green Energy, IPOs"
-          className="w-full px-6 py-4 bg-gray-50 dark:bg-white/5 border-none rounded-2xl focus:ring-2 focus:ring-orange-500/20 text-lg mb-6 dark:text-white"
+          className="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500/20 text-lg mb-6"
         />
         <button
           onClick={() => {
@@ -595,26 +595,68 @@ export default function App() {
         } else {
           // Handle regular audio data URL or blob URL
           const newAudio = new Audio(audioUrl);
-          newAudio.onerror = (e) => {
-            console.error('Audio error:', e);
-            setIsPlaying(false);
-            setActiveAudioId(null);
+          let audioLoadFailed = false;
+
+          newAudio.onerror = async (e) => {
+            console.warn('⚠️ Audio file failed to load, falling back to Web Speech API:', e);
+            audioLoadFailed = true;
+            
+            // Fallback to Web Speech API
+            try {
+              const decodedText = text;
+              await speakText(decodedText);
+            } catch (speechError) {
+              console.error('Web Speech API also failed:', speechError);
+            } finally {
+              setIsPlaying(false);
+              setActiveAudioId(null);
+              setIsGeneratingSpeech(false);
+            }
           };
+
           newAudio.onended = () => {
-            setIsPlaying(false);
-            setActiveAudioId(null);
+            if (!audioLoadFailed) {
+              setIsPlaying(false);
+              setActiveAudioId(null);
+              setIsGeneratingSpeech(false);
+            }
           };
+
+          newAudio.onloadstart = () => {
+            console.log('🔊 Loading audio...');
+          };
+
+          newAudio.oncanplay = () => {
+            console.log('✅ Audio ready to play');
+          };
+
           setAudio(newAudio);
-          newAudio.play().catch(err => {
-            console.error('Playback failed:', err);
-            setIsGeneratingSpeech(false);
-          });
           setIsPlaying(true);
+          
+          newAudio.play().catch(err => {
+            console.warn('⚠️ Audio play error, falling back to Web Speech API:', err);
+            audioLoadFailed = true;
+            
+            // Fallback to Web Speech API
+            speakText(text).catch(e => {
+              console.error('Web Speech API fallback failed:', e);
+            }).finally(() => {
+              setIsPlaying(false);
+              setActiveAudioId(null);
+              setIsGeneratingSpeech(false);
+            });
+          });
         }
       } else {
-        console.warn('Audio generation returned null');
-        setIsGeneratingSpeech(false);
-        setActiveAudioId(null);
+        console.warn('⚠️ generateSpeech returned null, using Web Speech API');
+        setIsPlaying(true);
+        try {
+          await speakText(text);
+        } finally {
+          setIsPlaying(false);
+          setActiveAudioId(null);
+          setIsGeneratingSpeech(false);
+        }
       }
     } catch (e) {
       console.error('Speech generation error:', e);
@@ -752,14 +794,14 @@ export default function App() {
 
     if (!src) {
       return (
-        <div className="w-full bg-gray-50 dark:bg-white/5 p-4 rounded-2xl text-center text-sm text-gray-400 dark:text-gray-500">
+        <div className="w-full bg-gray-50 p-4 rounded-2xl text-center text-sm text-gray-400">
           ⚠️ Audio generation currently unavailable. Please try again.
         </div>
       );
     }
 
     return (
-      <div className="w-full bg-gray-50 dark:bg-white/5 p-6 rounded-2xl space-y-4">
+      <div className="w-full bg-gray-50 p-6 rounded-2xl space-y-4">
         {!useWebSpeech && <audio ref={audioRef} src={src} />}
         {error && <div className="text-xs text-red-500 font-semibold">{error}</div>}
         <div className="flex items-center gap-4">
@@ -782,7 +824,7 @@ export default function App() {
                   max={duration || 0} 
                   value={currentTime} 
                   onChange={handleSeek}
-                  className="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500"
+                  className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-500"
                 />
                 <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest">
                   <span>{formatTime(currentTime)}</span>
@@ -803,7 +845,7 @@ export default function App() {
         handleListen(text, id);
       }}
       disabled={isGeneratingSpeech && activeAudioId === id}
-      className={`flex items-center gap-2 px-3 py-1.5 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-lg text-xs font-bold hover:bg-orange-100 dark:hover:bg-orange-500/20 transition-all disabled:opacity-50 ${className}`}
+      className={`flex items-center gap-2 px-3 py-1.5 bg-orange-50 text-orange-600 rounded-lg text-xs font-bold hover:bg-orange-100 transition-all disabled:opacity-50 ${className}`}
     >
       {isGeneratingSpeech && activeAudioId === id ? (
         <Loader2 className="w-3 h-3 animate-spin" />
@@ -818,7 +860,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FDFCFB] dark:bg-[#0A0A0A] transition-colors duration-300">
+      <div className="min-h-screen flex items-center justify-center bg-white transition-colors duration-300">
         <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
       </div>
     );
@@ -826,26 +868,26 @@ export default function App() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#FDFCFB] dark:bg-[#0A0A0A] flex flex-col items-center justify-center p-6 transition-colors duration-300">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 transition-colors duration-300">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-2xl"
         >
-          <div className="inline-block px-4 py-1.5 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 rounded-full text-xs font-bold tracking-widest uppercase mb-6">
+          <div className="inline-block px-4 py-1.5 bg-orange-50 text-orange-600 rounded-full text-xs font-bold tracking-widest uppercase mb-6">
             The Future of Business News
           </div>
-          <h1 className="text-6xl md:text-8xl font-black text-gray-900 dark:text-white tracking-tighter mb-8 leading-[0.9]">
+          <h1 className="text-6xl md:text-8xl font-black text-gray-900 tracking-tighter mb-8 leading-[0.9]">
             AURA <span className="text-orange-500">NEWS.</span>
           </h1>
-          <p className="text-xl text-gray-500 dark:text-gray-400 mb-12 leading-relaxed">
+          <p className="text-xl text-gray-500 mb-12 leading-relaxed">
             Experience news that thinks with you. Personalized intelligence briefings, 
             visual story arcs, and real-time vernacular synthesis.
           </p>
           <button 
             onClick={handleLogin}
             disabled={isLoggingIn}
-            className="px-10 py-5 bg-gray-900 dark:bg-white dark:text-black text-white rounded-2xl font-bold text-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-all shadow-2xl shadow-gray-200 dark:shadow-none flex items-center mx-auto disabled:opacity-50"
+            className="px-10 py-5 bg-gray-900 text-white rounded-2xl font-bold text-lg hover:bg-gray-800 transition-all shadow-2xl shadow-gray-200 flex items-center mx-auto disabled:opacity-50"
           >
             {isLoggingIn ? (
               <>Connecting... <Loader2 className="ml-3 w-5 h-5 animate-spin" /></>
@@ -860,7 +902,7 @@ export default function App() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[#FDFCFB] dark:bg-[#0A0A0A] p-6 md:p-12 transition-colors duration-300">
+      <div className="min-h-screen bg-white p-6 md:p-12 transition-colors duration-300">
         <Onboarding onComplete={handleOnboardingComplete} />
       </div>
     );
@@ -868,14 +910,14 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-[#FDFCFB] dark:bg-[#0A0A0A] flex flex-col md:flex-row transition-colors duration-300">
+      <div className="min-h-screen bg-white flex flex-col md:flex-row transition-colors duration-300">
         {/* Sidebar */}
-        <aside className="w-full md:w-72 bg-white dark:bg-[#141414] border-r border-gray-100 dark:border-gray-800 p-6 flex flex-col transition-colors duration-300">
+        <aside className="w-full md:w-72 bg-white border-r border-gray-200 p-6 flex flex-col transition-colors duration-300">
           <div className="flex items-center gap-2 mb-12">
             <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
               <Newspaper className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-black tracking-tighter dark:text-white">AURA NEWS</span>
+            <span className="text-xl font-black tracking-tighter">AURA NEWS</span>
           </div>
 
           <nav className="flex-1 space-y-2">
@@ -892,8 +934,8 @@ export default function App() {
                 onClick={() => setActiveTab(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all ${
                   activeTab === item.id 
-                    ? 'bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400' 
-                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
+                    ? 'bg-orange-50 text-orange-600' 
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
                 <item.icon className="w-5 h-5" />
@@ -902,19 +944,19 @@ export default function App() {
             ))}
           </nav>
 
-          <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800">
+          <div className="mt-auto pt-6 border-t border-gray-200">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center">
-                <User className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-gray-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{profile.displayName}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{profile.persona}</p>
+                <p className="text-sm font-bold text-gray-900 truncate">{profile.displayName}</p>
+                <p className="text-xs text-gray-500 capitalize">{profile.persona}</p>
               </div>
             </div>
             <button 
               onClick={() => signOut(auth)}
-              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 font-semibold hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 font-semibold hover:bg-red-50 rounded-lg transition-all"
             >
               <LogOut className="w-4 h-4" /> Sign Out
             </button>
@@ -922,35 +964,26 @@ export default function App() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 bg-[#FDFCFB] dark:bg-[#0A0A0A] p-6 md:p-12 overflow-y-auto transition-colors duration-300">
+        <main className="flex-1 bg-white p-6 md:p-12 overflow-y-auto transition-colors duration-300">
           {/* Top Bar */}
           <div className="flex items-center justify-between mb-12">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#141414] border border-gray-100 dark:border-gray-800 rounded-xl shadow-sm transition-colors duration-300">
+              <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl shadow-sm transition-colors duration-300">
                 <Globe className="w-4 h-4 text-gray-400" />
                 <select 
                   value={language}
                   onChange={(e) => setLanguage(e.target.value)}
-                  className="bg-transparent border-none text-xs font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 focus:ring-0 cursor-pointer"
+                  className="bg-transparent border-none text-xs font-black uppercase tracking-widest text-gray-500 focus:ring-0 cursor-pointer"
                 >
                   {ALL_LANGS.map(lang => (
-                    <option key={lang} value={lang} className="dark:bg-[#141414]">{lang}</option>
+                    <option key={lang} value={lang} className="bg-white">{lang}</option>
                   ))}
                 </select>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-                className="p-3 bg-white dark:bg-[#141414] border border-gray-100 dark:border-gray-800 rounded-xl shadow-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-all group"
-              >
-                {theme === 'light' ? (
-                  <Moon className="w-5 h-5 text-gray-600 group-hover:text-orange-500 transition-colors" />
-                ) : (
-                  <Sun className="w-5 h-5 text-orange-500 transition-colors" />
-                )}
-              </button>
+              {/* Navigation controls */}
             </div>
           </div>
 

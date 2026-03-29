@@ -3,3 +3,24 @@
 @theme {
   --dark-mode: class;
 }
+
+/* Global color overrides for card surfaces */
+body {
+  background-color: #fff;
+  color: #000;
+}
+
+/* Force all Tailwind text utilities to render black text */
+[class*="text-"] {
+  color: #000 !important;
+}
+
+/* Standardize every border to pure black */
+[class*="border"] {
+  border-color: #000 !important;
+}
+
+/* Any bordered surface should stay white like a card */
+[class*="border"][class*="bg-"] {
+  background-color: #fff !important;
+}
